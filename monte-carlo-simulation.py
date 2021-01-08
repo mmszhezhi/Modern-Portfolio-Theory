@@ -1,0 +1,35 @@
+import numpy as np
+import pandas as pd
+from pandas_datareader import data as wb
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import norm
+
+ticker = 'GOOG'
+data = pd.DataFrame()
+data[ticker] = wb.DataReader(ticker, data_source = 'yahoo', start = '2010-1-1')['Adj Close']
+log_return = np.log(1 + data.pct_change())
+
+u = log_return.mean()
+var = log_return.var()
+drift = u - (0.5*var)
+stdev = log_return.std()
+days = 50
+trials = 10000
+Z = norm.ppf(np.random.rand(days, trials)) #days, trials
+daily_returns = np.exp(drift.values + stdev.values * Z)
+price_paths = np.zeros_like(daily_returns)
+price_paths[0] = data.iloc[-1]
+print("initial price ",data.iloc[-1][0])
+for t in range(1, days):
+    price_paths[t] = price_paths[t-1]*daily_returns[t]
+ret = []
+d1 = pd.DataFrame(price_paths)
+d1.plot()
+# for i in range(d1.shape[0]):
+#     plt.plot(d1[i,:])
+plt.show()
+
+
+
+
